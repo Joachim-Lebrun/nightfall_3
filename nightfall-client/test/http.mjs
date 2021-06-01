@@ -353,7 +353,7 @@ describe('Testing the http API', () => {
       // push subsequent block signing requests to the queue
       blockSubmissionFunction = (a, b, c, d, e) =>
         blockSubmissionQueue.push(async () => {
-          await new Promise(resolve => setTimeout(resolve, 1000)); // TODO fix /verify so we can remove this.
+          // await new Promise(resolve => setTimeout(resolve, 1000)); // TODO fix /verify so we can remove this.
           return submitTransaction(a, b, c, d, e);
         });
       // to make three blocks, we need six transactions
