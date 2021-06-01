@@ -222,9 +222,6 @@ describe('Testing the http API', () => {
   describe('Double transfer tests', () => {
     let txDataToSign;
     it('should transfer some crypto (back to us) using ZKP', async () => {
-      // give the last block time to be submitted, or we won't have enough
-      // commitments in the Merkle tree to use for the double transfer.
-      await new Promise(resolve => setTimeout(resolve, 5000));
       const res = await chai
         .request(url)
         .post('/transfer')
