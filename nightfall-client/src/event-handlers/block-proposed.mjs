@@ -17,8 +17,10 @@ async function blockProposedEventHandler(data) {
     );
   // these nullifiers have now appeared on-chain. Thus their nullification
   // has been confirmed (barring a rollback) and we need to update the
-  // commitment database to that effect
-  markNullifiedOnChain(nullifiers, blockNumberL2);
+  // commitment database to that effect, unless we failed to find them in the
+  // blockchain record, probably because of a rollback.  If that was the case,
+  // blockNumberL2 will be null and we'll move on
+  if (blockNumberL2 !== null) markNullifiedOnChain(nullifiers, blockNumberL2);
 }
 
 export default blockProposedEventHandler;

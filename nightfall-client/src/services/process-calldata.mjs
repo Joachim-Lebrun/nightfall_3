@@ -6,6 +6,7 @@ much cheaper, although the offchain part is more complex.
 import config from 'config';
 import Web3 from '../utils/web3.mjs';
 import { waitForContract } from '../event-handlers/subscribe.mjs';
+import logger from '../utils/logger.mjs';
 
 const { PROPOSE_BLOCK_TYPES, STATE_CONTRACT_NAME, ZERO } = config;
 
@@ -53,7 +54,7 @@ async function getProposeBlockCalldata(eventData) {
   // Remove the '0x' and function signature to recove rhte abi bytecode
   const abiBytecode = `0x${tx.input.slice(10)}`;
   const decoded = web3.eth.abi.decodeParameters(PROPOSE_BLOCK_TYPES, abiBytecode);
-  const blockData = decoded['0'];
+  let blockData = decoded['0'];
   const transactionsData = decoded['1'];
   const [leafCount, proposer, root] = blockData;
   const block = {
@@ -99,27 +100,35 @@ async function getProposeBlockCalldata(eventData) {
     .map(t => t.nullifiers)
     .flat()
     .filter(n => n !== ZERO);
-  // next, we need to tie these up with the number of the block that they are in
-  // It's a little non-trivial to compute this because of course the on-chain
-  // layer 2 block record may have moved on since we arrived here if other
-  // proposeBlocks have happened, firing off other handler asyncs.
-  // To make sure we get the correct block number, we'll start from the end of
-  // the blockchain record and search backwards until we find 'our' L2 block.
-  // Unless we've spent ages here, it'll be close to the end.
+  /*
+   next, we need to tie these up with the number of the block that they are in
+   It's a little non-trivial to compute this because of course the on-chain
+   layer 2 block record may have moved on since we arrived here if other
+   proposeBlocks have happened, firing off other handler asyncs.
+   To make sure we get the correct block number, we'll start from the end of
+   the blockchain record and search backwards until we find 'our' L2 block.
+   Unless we've spent ages here, it'll be close to the end. It's also possible
+   we never find the block because a rollback happens while we're in this async
+   and removes it from the blockchain record. If this happens, we may want to
+   stop searching at some point to save searching back to the begining of time.
+   The finalisation point seems optimal. We'll make that a TODO for now.
+  */
   const blockHash = calcBlockHash(block, transactions);
   let blockNumberL2 = Number(await stateContractInstance.methods.getNumberOfL2Blocks().call());
   do {
     blockNumberL2--;
-    if (blockNumberL2 < 0)
-      throw new Error(
-        'The begining of the Layer 2 record has been reached and the block was not found',
+    if (blockNumberL2 < 0) {
+      logger.warn(
+        'The L2 block referenced in a BlockProposed event was not found on chain. This is probably due to a rollback removing it.',
       );
-  } while (
+      blockNumberL2 = null;
+      break;
+    }
     // we don't want to spawn loads of asyncs because we probably only need to
     // go a few times round this loop before finding 'our' block
     // eslint-disable-next-line no-await-in-loop
-    blockHash !== (await stateContractInstance.methods.getBlockData(blockNumberL2).call()).blockHash
-  );
+    blockData = await stateContractInstance.methods.getBlockData(blockNumberL2).call();
+  } while (blockHash !== blockData.blockHash);
   return { nullifiers, blockNumberL2 };
 }
 

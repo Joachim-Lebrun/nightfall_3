@@ -67,10 +67,13 @@ export async function clearNullified(blockNumberL2) {
 }
 
 // function to mark a commitments as nullified on chain for a mongo db
+// we also set the isNullified flag. This should already be set but it might not
+// be if we are re-syncing because we won't actually replay the transaction
+// creation itself, just the on-chain events
 export async function markNullifiedOnChain(nullifiers, blockNumberL2) {
   const connection = await mongo.connection(MONGO_URL);
   const query = { nullifier: { $in: nullifiers } };
-  const update = { $set: { isNullifiedOnChain: Number(blockNumberL2) } };
+  const update = { $set: { isNullifiedOnChain: Number(blockNumberL2), isNullified: true } };
   const db = connection.db(COMMITMENTS_DB);
   return db.collection(COMMITMENTS_COLLECTION).updateMany(query, update);
 }
