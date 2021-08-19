@@ -28,11 +28,11 @@ const main = async () => {
     initialBlockSync(proposer).then(() => {
       subscribeToNewCurrentProposer(newCurrentProposerEventHandler, proposer);
       conditionalMakeBlock(proposer);
+      subscribeToEvents(buffer, eventHandlers);
     });
     // we do not wait for the initial block sync for these event handlers
     // as we want to still listen to incoming events (just not make blocks)
     // subscribe to blockchain events
-    subscribeToEvents(buffer, eventHandlers);
     app.listen(80);
   } catch (err) {
     logger.error(err);
