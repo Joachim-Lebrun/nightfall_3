@@ -104,7 +104,8 @@ export async function clearNullified(blockNumberL2) {
   const connection = await mongo.connection(MONGO_URL);
   const query = { isNullifiedOnChain: { $gte: Number(blockNumberL2) } };
   const update = {
-    $set: { isNullifiedOnChain: -1, isNullified: false, isPendingNullification: false },
+    // $set: { isNullifiedOnChain: -1, isNullified: false, isPendingNullification: false },
+    $set: { isNullifiedOnChain: -1 },
   };
   const db = connection.db(COMMITMENTS_DB);
   return db.collection(COMMITMENTS_COLLECTION).updateMany(query, update);
@@ -113,7 +114,9 @@ export async function clearNullified(blockNumberL2) {
 // as above, but removes isOnChain for deposit commitments
 export async function clearOnChain(blockNumberL2) {
   const connection = await mongo.connection(MONGO_URL);
-  const query = { isOnChain: { $gte: Number(blockNumberL2) }, isDeposited: true };
+  // const query = { isOnChain: { $gte: Number(blockNumberL2) }, isDeposited: true };
+  // Clear all onchains
+  const query = { isOnChain: { $gte: Number(blockNumberL2) } };
   const update = {
     $set: { isOnChain: -1 },
   };
@@ -145,6 +148,20 @@ export async function markNullifiedOnChain(nullifiers, blockNumberL2) {
   const update = { $set: { isNullifiedOnChain: Number(blockNumberL2) } };
   const db = connection.db(COMMITMENTS_DB);
   return db.collection(COMMITMENTS_COLLECTION).updateMany(query, update);
+}
+
+export async function getAllCommitments() {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(COMMITMENTS_DB);
+  return db.collection(COMMITMENTS_COLLECTION).find().toArray();
+}
+
+// as above, but removes output commitments
+export async function deleteCommitments(commitmentHashes) {
+  const connection = await mongo.connection(MONGO_URL);
+  const query = { _id: { $in: commitmentHashes } };
+  const db = connection.db(COMMITMENTS_DB);
+  return db.collection(COMMITMENTS_COLLECTION).deleteMany(query);
 }
 
 // function to find commitments that can be used in the proposed transfer
