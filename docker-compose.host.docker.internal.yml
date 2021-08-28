@@ -8,6 +8,8 @@ services:
   client:
     environment:
       BLOCKCHAIN_WS_HOST: host.docker.internal
+    extra_hosts:
+      host.docker.internal: host-gateway
 
   deployer:
     environment:
@@ -16,12 +18,18 @@ services:
       # startup routines will wait for a blockchain client to be reachable on this network
       ETH_NETWORK: development
       BLOCKCHAIN_WS_HOST: host.docker.internal
+    extra_hosts:
+      host.docker.internal: host-gateway
 
   # Timber service, configured for nightfall
   timber:
     environment:
       BLOCKCHAIN_WS_HOST: host.docker.internal
+    extra_hosts:
+      host.docker.internal: host-gateway
 
   optimist:
     environment:
       BLOCKCHAIN_WS_HOST: host.docker.internal
+    extra_hosts:
+      host.docker.internal: host-gateway
