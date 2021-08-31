@@ -167,7 +167,10 @@ export async function findBlocksFromBlockNumberL2(blockNumberL2) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   const query = { blockNumberL2: { $gte: Number(blockNumberL2) } };
-  return db.collection(SUBMITTED_BLOCKS_COLLECTION).find(query).toArray();
+  return db
+    .collection(SUBMITTED_BLOCKS_COLLECTION)
+    .find(query, { sort: { blockNumberL2: 1 } })
+    .toArray();
 }
 
 /**
@@ -352,10 +355,10 @@ export async function resetNullifiers(blockHash) {
 }
 
 // delete all the nullifiers in this block
-export async function deleteNullifiers(hash) {
+export async function deleteNullifiers(hashes) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
-  const query = { hash };
+  const query = { hash: { $in: hashes } };
   return db.collection(NULLIFIER_COLLECTION).deleteMany(query);
 }
 
