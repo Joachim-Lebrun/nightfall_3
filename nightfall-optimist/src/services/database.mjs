@@ -249,7 +249,7 @@ been processed into a block
 export async function removeTransactionsFromMemPool(block) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
-  const query = { transactionHash: { $in: block.transactionHashes } };
+  const query = { transactionHash: { $in: block.transactionHashes }, blockNumberL2: -1 };
   const update = { $set: { mempool: false, blockNumberL2: block.blockNumberL2 } };
   return db.collection(TRANSACTIONS_COLLECTION).updateMany(query, update);
 }
@@ -299,6 +299,18 @@ export async function deleteTransferAndWithdraw(transactionHashes) {
     transactionHash: { $in: transactionHashes },
     transactionType: { $in: ['1', '2', '3'] },
   };
+  return db.collection(TRANSACTIONS_COLLECTION).deleteMany(query);
+}
+
+/*
+For added safety we only delete mempool: true, we should never be deleting
+transactions from our local db that have been spent.
+*/
+export async function deleteTransactionsByTransactionHashes(transactionHashes) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  // We should not delete from a spent mempool
+  const query = { transactionHash: { $in: transactionHashes }, mempool: true };
   return db.collection(TRANSACTIONS_COLLECTION).deleteMany(query);
 }
 
