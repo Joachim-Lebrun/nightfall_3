@@ -292,16 +292,6 @@ export async function getTransactionsByTransactionHashes(transactionHashes) {
   return transactions;
 }
 
-export async function deleteTransferAndWithdraw(transactionHashes) {
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(OPTIMIST_DB);
-  const query = {
-    transactionHash: { $in: transactionHashes },
-    transactionType: { $in: ['1', '2', '3'] },
-  };
-  return db.collection(TRANSACTIONS_COLLECTION).deleteMany(query);
-}
-
 /*
 For added safety we only delete mempool: true, we should never be deleting
 transactions from our local db that have been spent.
