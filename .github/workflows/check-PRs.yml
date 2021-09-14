@@ -1,9 +1,9 @@
 name: Check PR
 
 on:
-  pull_request:
+  push:
     branch:
-      - master
+      - liju.jose/rinkeby-deployement-and-run-integration-test-github-workflow
 
 jobs:
   eslint-check:
