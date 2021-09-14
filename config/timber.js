@@ -74,6 +74,9 @@ module.exports = {
   web3: {
     host: process.env.BLOCKCHAIN_WS_HOST,
     port: process.env.BLOCKCHAIN_PORT,
+    url:
+      process.env.BLOCKCHAIN_TESTNET_URL ||
+      `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}`,
 
     options: {
       defaultAccount: '0x0',
@@ -84,6 +87,14 @@ module.exports = {
       transactionConfirmationBlocks: 15,
       transactionPollingTimeout: 480,
       // transactionSigner: new CustomTransactionSigner()
+
+      // Enable auto reconnection
+      reconnect: {
+        auto: true,
+        delay: 5000, // ms
+        maxAttempts: 5,
+        onTimeout: false,
+      },
     },
   },
   LOG_LEVEL: process.env.LOG_LEVEL || 'info',
